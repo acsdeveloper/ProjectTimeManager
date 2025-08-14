@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+
+# Environment files
+*.env
+.env
+
+# Virtual environment folders
+venv/
+env/
+
+# VSCode and system files
+.vscode/
+*.DS_Store
+
+# Secret files
+*.local
+*.pem
+credentials/
+credentials/credentials.json
+
+# Static and media
+staticfiles/
+media/
+
+# Cache
+*.cache

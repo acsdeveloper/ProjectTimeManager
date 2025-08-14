@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: project-time-management
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn your_project_name.wsgi"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: your_project_name.settings
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: False

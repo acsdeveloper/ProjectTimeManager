@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %}
+
+{% block Main %}
+
+<!-- ALERT MESSAGES FOR ADDING PROJECTS -->
+<div class="container">
+  {% if messages %}
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3"
+    role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"
+      aria-label="Close"></button>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<!-- MAIN FRAME / WORKSPACE -->
+<div class="container py-5" style="height:450px">
+  <div class="card shadow fs-5 p-5">
+    <div class="card-body">
+      <h1 class="text-center mb-5">Project Time Tracker</h1>
+
+      <!-- Projects + Create Button -->
+      <div
+        class="d-flex flex-wrap align-items-center justify-content-start gap-2 gap-sm-3 mb-3 px-2">
+        <h2 class="mb-0 fs-5 fs-sm-4">My Projects</h2>
+        <button type="button"
+          class="create-btn btn btn-primary btn-sm px-3 py-2"
+          data-bs-toggle="modal" data-bs-target="#projectModal">
+          Create Project <i class="bi bi-arrow-right ms-2"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- DELETE FORM -->
+    <form id="deleteForm" method="POST" action="{% url 'projects' %}">
+      {% csrf_token %}
+      <div class="table-container">
+        {% if projects %}
+        <div class="table-responsive">
+          <table class="table task-table align-middle text-nowrap">
+            <thead class="table-light">
+              <tr>
+                <th>No</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Created</th>
+                <th>Deadline</th>
+                <th>Assigned Hours</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for project in projects %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="truncate-cell">
+                  <a href="#" data-bs-toggle="modal"
+                    data-bs-target="#projectDetailModal{{project.id}}">{{project.title }}</a>
+                </td>
+                <td class="truncate-cell">{{ project.description }}</td>
+                <td>{{ project.created_at|localtime|date:"Y-m-d h:i A" }}</td>
+                <td>
+                  {% if project.deadline %}
+                  {{ project.deadline|localtime|date:"Y-m-d h:i A" }}
+                  {% else %}
+                  —
+                  {% endif %}
+                </td>
+                 <td>{{ project.hours_assigned }}</td>
+                <td id="status-{{ project.id }}">
+                  {% if project.is_submitted %}
+                  <span class="badge bg-success">Project Submitted</span>
+                  {% elif project.deadline and project.deadline < now %}
+                  <span class="od-badge">Overdue</span>
+                  {% else %}
+                  <span class="ot-badge">On Time</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <button type="button" class="imp-btn" data-bs-toggle="modal"
+                    data-bs-target="#editModal{{ project.id }}">
+                    Edit
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <h3 class="text-muted">No projects found</h3>
+          <p class="lead">Get started by adding your first project!</p>
+        </div>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CREATE PROJECT MODAL -->
+<div class="modal fade" id="projectModal" tabindex="-1"
+  data-bs-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'create_project' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Create Project</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"
+            aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" name="title" id="title" class="form-control"
+              required>
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea name="description" id="description" class="form-control"
+              rows="3" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="deadline" class="form-label">Deadline (Date &
+              Time)</label>
+            <input type="datetime-local" name="deadline" id="deadline"
+              class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label for="hours_assigned" class="form-label">Hours to
+              Complete</label>
+            <input type="number" step="0.1" name="hours_assigned"
+              id="hours_assigned" class="form-control" min="0">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Add Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- LOOP FOR EDIT + DETAIL MODALS -->
+{% for project in projects %}
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editModal{{ project.id }}" tabindex="-1"
+  data-bs-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'projects'%}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Project</h5>
+          <button type="button" class="btn-close"
+            data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" name="title" class="form-control mb-2"
+            value="{{ project.title }}" required>
+          <textarea name="description" class="form-control mb-2"
+            required>{{ project.description }}</textarea>
+          <input type="datetime-local" name="deadline" class="form-control"
+            value="{% if project.deadline %}{{ project.deadline|localtime|date:'Y-m-d\\TH:i' }}{% endif %}">
+          <div class="mb-3 mt-3">
+            <label for="hours_assigned" class="form-label">Hours to
+              Complete</label>
+            <input type="number" step="0.1" name="hours_assigned"
+              id="hours_assigned" class="form-control"
+              value="{{ project.hours_assigned|default_if_none:'' }}">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% for project in projects %}
+<div class="modal fade" id="projectDetailModal{{ project.id }}" tabindex="-1"
+  data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header d-flex justify-content-between w-100">
+        <div class="d-flex align-items-center gap-3">
+          <h5 class="modal-title mb-0">{{ project.title }}</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div class="row">
+          <!-- Left Side -->
+          <div class="col-md-7">
+            <h6 class="text-muted">Description</h6>
+            <p>{{ project.description }}</p>
+            <hr>
+
+            <!-- Timer + Form -->
+            <div class="task-timer-container"
+              data-project-id="{{ project.id }}"
+              data-is-submitted="{{ project.is_submitted|yesno:'true,false' }}">
+              <div class="timerDisplay" id="timerDisplay-{{ project.id }}">00:00:00</div>
+
+              <button class="btn text-light px-5 startBtn" style="background-color: rgb(69, 108, 109);">Start</button>
+              <button class="btn text-light px-5 pauseBtn d-none" style="background-color: rgb(30,58,138);">
+                <i class="bi bi-pause"></i>
+              </button>
+              <button class="btn text-light px-5 resumeBtn d-none" style="background-color: rgb(30,58,138);">
+                <i class="bi bi-play"></i>
+              </button>
+
+              <!-- Submit Form -->
+<form method="POST" action="{% url 'submit_project' project.id %}" class="d-inline" id="submitForm-{{ project.id }}">
+  {% csrf_token %}
+  <input type="hidden" name="start_time" id="startTimeInput-{{ project.id }}">
+  <input type="hidden" name="end_time" id="endTimeInput-{{ project.id }}">
+  <input type="hidden" name="duration" id="durationInput-{{ project.id }}">
+  <input type="hidden" name="tracked_time" id="trackedTimeInput-{{ project.id }}">
+
+  <button type="submit" onclick="setTrackedTime('{{ project.id }}')"
+          class="btn text-light px-5 submitBtn d-none"
+          style="background-color: rgb(30,58,138);">
+    Submit
+  </button>
+</form>
+
+            </div>
+
+            <div class="spinner-grow spinner-grow-sm text-light d-none" id="spinner-{{ project.id }}" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <div id="submission-alert-box-{{ project.id }}"></div>
+          </div>
+
+          <!-- Right Side -->
+          <div class="col-md-5 border-start mt-3 mt-md-0 ps-md-4">
+            <div class="mb-3"><strong>Created At:</strong><br>{{ project.created_at|localtime|date:"Y-m-d H:i" }}</div>
+            <div class="mb-3"><strong>Deadline:</strong><br>
+              {% if project.deadline %}
+                {{ project.deadline|localtime|date:"Y-m-d H:i" }}
+              {% else %}
+                <span class="text-muted">No Deadline</span>
+              {% endif %}
+            </div>
+
+            {% if project.is_submitted %}
+            <div class="mt-4">
+              <strong>📬 Submitted At:</strong><br>
+              {{ project.submitted_at|localtime|date:"Y-m-d H:i" }}
+              <div class="mt-2">
+                {% if project.deadline and project.submitted_at > project.deadline %}
+                  <span class="badge bg-danger">❌ Submitted After Deadline</span>
+                {% else %}
+                  <span class="badge bg-success">✅ Submitted On Time</span>
+                {% endif %}
+              </div>
+            </div>
+            {% else %}
+            <div class="mt-4 text-muted">⏳ Project not submitted yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% empty %}
+<p class="text-muted">No projects available.</p>
+{% endfor %}
+
+<script>
+function setTrackedTime(projectId) {
+    const display = document.getElementById(`timerDisplay-${projectId}`);
+    const trackedInput = document.getElementById(`trackedTimeInput-${projectId}`);
+
+    if (display && trackedInput) {
+      trackedInput.value = display.textContent.trim(); // HH:MM:SS format
+    } else {
+      console.warn("Tracked time input or display not found for project:", projectId);
+    }
+  }
+</script>
+
+<script>
+function submitProject(projectId) {
+    const form = document.getElementById('submitForm-' + projectId);
+    const trackedTime = document.getElementById('trackedTime-' + projectId).value;
+
+    fetch(form.action, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": form.querySelector('[name=csrfmiddlewaretoken]').value,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+            tracked_time: trackedTime
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Project submitted successfully ✅");
+            // Optional: Disable the button or update the UI
+        } else {
+            alert("Submission failed ❌: " + data.message);
+        }
+    })
+    .catch(error => {
+        alert("Something went wrong ❌");
+        console.error(error);
+    });
+
+    return false; // ✅ Prevent page reload
+}
+</script>
+
+
+
+
+<script>
+  document.querySelectorAll('.submitBtn').forEach(button => {
+  button.addEventListener('click', function (e) {
+    const container = button.closest('.task-timer-container');
+    const projectId = container.dataset.projectId;
+
+    const timerDisplay = document.getElementById(`timerDisplay-${projectId}`);
+    const duration = timerDisplay.textContent;
+
+    // Save current timestamp
+    const now = new Date();
+    const endTime = now.toISOString();
+    const startTime = container.dataset.startTime || now.toISOString();
+
+    // Fill hidden inputs
+    document.getElementById(`startTimeInput-${projectId}`).value = startTime;
+    document.getElementById(`endTimeInput-${projectId}`).value = endTime;
+    document.getElementById(`durationInput-${projectId}`).value = duration;
+  });
+});
+
+// Store start time on click of Start button
+document.querySelectorAll('.startBtn').forEach(button => {
+  button.addEventListener('click', function () {
+    const container = button.closest('.task-timer-container');
+    container.dataset.startTime = new Date().toISOString();
+  });
+});
+
+  document.querySelectorAll('.task-timer-container').forEach(container => {
+    const projectId = container.getAttribute('data-project-id');
+    const isSubmitted = container.getAttribute('data-is-submitted') === "true";
+
+    const timerDisplay = container.querySelector('.timerDisplay');
+    const startBtn = container.querySelector('.startBtn');
+    const pauseBtn = container.querySelector('.pauseBtn');
+    const resumeBtn = container.querySelector('.resumeBtn');
+    const submitBtn = container.querySelector('.submitBtn');  // still used for UI toggle
+    const STORAGE_KEY = `projectTimerData-${projectId}`;
+
+    let interval;
+
+    function formatTime(totalSeconds) {
+      const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      const secs = String(totalSeconds % 60).padStart(2, "0");
+      return `${hrs}:${mins}:${secs}`;
+    }
+
+    function startTimer(startTime, elapsedBefore = 0) {
+      clearInterval(interval);
+      interval = setInterval(() => {
+        const now = new Date().getTime();
+        const elapsed = Math.floor((now - startTime) / 1000) + elapsedBefore;
+        timerDisplay.textContent = formatTime(elapsed);
+      }, 1000);
+    }
+
+    function showButtons(...visibleBtns) {
+      [startBtn, pauseBtn, resumeBtn, submitBtn].forEach(btn => btn.classList.add("d-none"));
+      visibleBtns.forEach(btn => btn.classList.remove("d-none"));
+    }
+
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    if (isSubmitted) {
+      if (stored) {
+        const data = JSON.parse(stored);
+        const trackedSeconds = data.status === "running"
+          ? Math.floor((new Date().getTime() - data.startTime) / 1000) + data.elapsed
+          : data.elapsed;
+        timerDisplay.textContent = formatTime(trackedSeconds);
+      }
+      showButtons(); // no buttons shown if submitted
+      return;
+    }
+
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.status === "running") {
+        startTimer(data.startTime, data.elapsed);
+        showButtons(pauseBtn, submitBtn);
+      } else if (data.status === "paused") {
+        timerDisplay.textContent = formatTime(data.elapsed);
+        showButtons(resumeBtn, submitBtn);
+      }
+    } else {
+      showButtons(startBtn);
+    }
+
+    startBtn.onclick = () => {
+      const now = new Date().getTime();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ startTime: now, elapsed: 0, status: "running" }));
+      startTimer(now, 0);
+      showButtons(pauseBtn, submitBtn);
+    };
+
+    pauseBtn.onclick = () => {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const now = new Date().getTime();
+      const elapsed = Math.floor((now - data.startTime) / 1000) + data.elapsed;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ elapsed: elapsed, status: "paused" }));
+      clearInterval(interval);
+      showButtons(resumeBtn, submitBtn);
+    };
+
+    resumeBtn.onclick = () => {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const now = new Date().getTime();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ startTime: now, elapsed: data.elapsed, status: "running" }));
+      startTimer(now, data.elapsed);
+      showButtons(pauseBtn, submitBtn);
+    };
+  });
+</script>
+
+
+{% endfor %}
+
+{% endblock %}

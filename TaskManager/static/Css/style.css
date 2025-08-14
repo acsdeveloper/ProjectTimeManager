@@ -1,0 +1,314 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* --- STYLING THE NAVBAR --- */
+/* NAVBAR LINKS */
+
+.navbar .nav-item {
+  padding: 10px;
+  margin: 0 10px;
+}
+
+#navbarToggle,
+#navbarCloseBtn {
+  font-size: 22px;
+  background: none;
+  border: none;
+  margin-left: 10px;
+}
+
+.login-btn a{
+  /* background: #0b2f7d; */
+  /* border-radius: 50px; */
+  color: black;
+}
+
+
+
+/* MAIN CONTAINER */
+/* DESIGNING THE BUTTON */
+.user-dropdown{
+  background-color: #1e3a8a;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 18px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+}
+.user-dropdown a{
+  text-decoration: none;
+  color: #ffffff;
+}
+.imp-btn {
+  background-color: #1e3a8a;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 18px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+}
+.imp-btn:hover {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+.create-btn {
+  background-color: #1e3a8a;
+  /* deep navy blue */
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 18px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+}
+
+.create-btn i {
+  transition: transform 0.3s ease;
+}
+
+.create-btn:hover {
+  background-color: #0f172a;
+  /* dark blue-gray */
+  color: #e2e8f0;
+  /* light text on hover */
+}
+
+.create-btn:hover i {
+  transform: translateX(5px);
+  /* subtle arrow movement */
+}
+
+/* Optional custom style for create-btn if not using Bootstrap */
+.create-btn {
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+}
+/* STYLING THE TABLE CONTENT */
+/* Scrollable container */
+.table-container {
+  height:350px;
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+}
+
+/* Table layout and spacing */
+.task-table {
+  width: 100%;
+  height:350px;
+  min-width: 900px;
+  /* Force scroll on very small screens */
+  border-collapse: collapse;
+}
+
+/* Default font and spacing */
+.task-table th,
+.task-table td {
+  padding: 12px;
+  font-size: 0.95rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Sticky header for usability */
+.task-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 2;
+}
+
+/* Limit the width of the description column and allow wrapping */
+.task-table td:nth-child(3),
+/* 3rd column = Description */
+.task-table th:nth-child(3) {
+  max-width: 200px;
+  white-space: normal;
+  /* Allow wrapping */
+  word-break: break-word;
+  /* Break long words if needed */
+}
+
+/* Ensure table wraps properly and doesn't overflow */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Prevent text overflow */
+.truncate-cell {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-on-time {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 5px 10px;
+  border-radius: 5px;
+  display: inline-block;
+  font-size: 0.875rem;
+}
+
+.status-overdue {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 5px 10px;
+  border-radius: 5px;
+  display: inline-block;
+  font-size: 0.875rem;
+}
+
+
+.modal-body h6 {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.od-badge{
+  padding: 9px;
+  color: #000;
+  border-radius: 7px;
+  background-color: #ff5b6bc9;
+}
+.ot-badge{
+  padding: 9px;
+  color: #000;
+  border-radius: 7px;
+  background-color: #80ff9ec4;
+}
+
+
+
+/* DESIGNING THE WORK DETAILS */
+.check-btn-success{
+  border: 1px solid green;
+  border-radius: 5px;
+  padding: 5px 16px;
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+.check-btn-success:hover{
+  border: 1px solid green;
+  background-color: rgb(207, 255, 207);
+}
+.check-btn-danger{
+  border: 1px solid red;
+  border-radius: 5px;
+  padding: 5px 16px;
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+.check-btn-danger:hover{
+  border: 1px solid red;
+  background-color: rgb(255, 183, 183);
+}
+
+
+
+/* ALL MEDIA QUERIES */
+/* SMALLER SIZE ON MOBILE DEVICES */
+@media (max-width: 976px) {
+  .user-dropdown {
+    padding: 15px;
+    font-size: 8px 14px;
+    font-weight: bold;
+    width: 140px;
+  }
+}
+@media (max-width: 576px) {
+
+  .task-table td:nth-child(3),
+  .task-table th:nth-child(3) {
+    max-width: 120px;
+    font-size: 0.75rem;
+  }
+}
+/* Adjust for small screens */
+@media (max-width: 576px) {
+  .create-btn {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+
+  h2.fs-5 {
+    font-size: 1rem !important;
+  }
+}
+@media (min-width: 992px) {
+  #navbarToggle,
+  #navbarCloseBtn {
+    display: none !important;
+  }
+}
+
+/* Responsive typography and padding for smaller screens */
+@media (max-width: 576px) {
+  .task-table td, .task-table th {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  .truncate-cell {
+    max-width: 120px;
+  }
+
+  .imp-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .badge, .ot-badge, .od-badge {
+    font-size: 11px;
+  }
+}
+
+/* Extra compact on mobile */
+@media (max-width: 576px) {
+
+  .task-table th,
+  .task-table td {
+    font-size: 0.75rem;
+    padding: 4px 5px;
+  }
+
+  .btn,
+  .btn-sm {
+    font-size: 0.7rem;
+    padding: 3px 5px;
+  }
+
+  .btn-danger {
+    font-size: 0.8rem;
+  }
+}
+
+
+
+
+/* Shrink layout on medium devices */
+@media (max-width: 768px) {
+
+  .task-table th,
+  .task-table td {
+    font-size: 0.85rem;
+    padding: 6px 8px;
+  }
+
+  .btn,
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 4px 6px;
+  }
+}

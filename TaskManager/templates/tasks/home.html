@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %}
+
+{% block Main %}
+
+<!-- ALERT MESSAGES FOR ADDING TASKS -->
+<div class="container">
+  <!-- ALERT MESSAGES (Create / Delete / Others) -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+</div>
+
+
+<!-- 🔁 Loader (hidden by default) -->
+<div id="loader-{{ task.id }}" class="d-none mt-3 text-center">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Submitting...</span>
+  </div>
+  <p class="mt-2">Submitting task...</p>
+</div>
+
+<!-- MAIN FRAME / WORKSPACE -->
+<div class="container py-5" style="height:450px">
+  <div class="card shadow fs-5 p-5">
+    <div class="card-body">
+      <h1 class="text-center mb-5">Project Time Tracker</h1>
+
+      <!-- Tasks + Create Button -->
+      <div
+        class="d-flex flex-wrap align-items-center justify-content-start gap-2 gap-sm-3 mb-3 px-2">
+        <h2 class="mb-0 fs-5 fs-sm-4">My Tasks</h2>
+        <button
+          type="button"
+          class="create-btn btn btn-primary btn-sm px-3 py-2"
+          data-bs-toggle="modal"
+          data-bs-target="#taskModal">
+          Create Task <i class="bi bi-arrow-right ms-2"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- DELETE FORM -->
+    <form id="deleteForm" method="POST" action="{% url 'home' %}">
+  {% csrf_token %}
+  <div class="table-container">
+    {% if tasks %}
+    <div class="table-responsive">
+  <table class="table task-table align-middle text-nowrap">
+    <thead class="table-light">
+      <tr>
+        <th>No</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Created</th>
+        <th>Deadline</th>
+        <th>Hours Assigned</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+      <tr>
+        <td>{{ task.id }}</td>
+        <td class="truncate-cell">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#taskDetailModal{{ task.id }}">{{ task.title }}</a>
+        </td>
+        <td class="truncate-cell">{{ task.description }}</td>
+        <td>{{ task.created_at|localtime|date:"Y-m-d h:i A" }}</td>
+        <td>
+          {% if task.deadline %}
+            {{ task.deadline|localtime|date:"Y-m-d h:i A" }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td>{{ task.hours_assigned }}</td>
+        <td id="status-{{ task.id }}">
+          {% if task.is_submitted %}
+            <span class="badge bg-success">Task Submitted</span>
+          {% elif task.is_overdue %}
+            <span class="od-badge">Overdue</span>
+          {% else %}
+            <span class="ot-badge">On Time</span>
+          {% endif %}
+        </td>
+        <td>
+          <button type="button" class="imp-btn" data-bs-toggle="modal"
+            data-bs-target="#editModal{{ task.id }}">
+            Edit
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
+        {% else %}
+        <div class="text-center py-5">
+          <h3 class="text-muted">No tasks found</h3>
+          <p class="lead">Get started by adding your first task!</p>
+        </div>
+        {% endif %}
+      </div>
+      </tbody>
+    </table>
+</form>
+
+    </div>
+  </div>
+<!-- CREATE MODAL -->
+<div class="modal fade" id="taskModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'create_task' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Create Task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"
+            aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" name="title" id="title" class="form-control"
+              required>
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea name="description" id="description"
+              class="form-control" rows="3" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="deadline" class="form-label">Deadline (Date &
+              Time)</label>
+            <input type="datetime-local" name="deadline" id="deadline"
+              class="form-control">
+          </div>
+          <div class="mb-3">
+    <label for="hours_assigned" class="form-label">Hours to Complete</label>
+    <input type="number" step="0.1" name="hours_assigned" id="hours_assigned" class="form-control" min="0">
+  </div>
+        </div>
+
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Add Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div> 
+
+<!-- EDIT MODALS -->
+{% for task in tasks %}
+<div class="modal fade" id="editModal{{ task.id }}" tabindex="-1"
+  data-bs-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'update_task' task.id %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Task</h5>
+          <button type="button" class="btn-close"
+            data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" name="title" class="form-control mb-2"
+            value="{{ task.title }}" required>
+          <textarea name="description" class="form-control mb-2"
+            required>{{ task.description }}</textarea>
+          <input type="datetime-local" name="deadline" class="form-control"
+            value="{% if task.deadline %}{{ task.deadline|localtime|date:'Y-m-d\\TH:i' }}{% endif %}">
+        </div>
+        <div class="mb-3 form-control">
+  <label for="hours_assigned" class="form-label">Hours to Complete</label>
+  <input type="number" step="0.1" name="hours_assigned" id="hours_assigned" class="form-control"
+         value="{{ task.hours_assigned|default_if_none:'' }}">
+</div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save
+            Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Task Detail Modal -->
+<div class="modal fade" id="taskDetailModal{{ task.id }}" tabindex="-1"
+  data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header d-flex justify-content-between w-100">
+        <div class="d-flex align-items-center gap-3">
+          <h5 class="modal-title mb-0">{{ task.title }}</h5>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#taskModal"
+            data-bs-dismiss="modal">
+            Add Task <i class="bi bi-plus ms-1"></i>
+          </button>
+          <button type="button" class="btn-close"
+            data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div class="row">
+          <!-- Left side -->
+          <div class="col-md-7">
+            <h6 class="text-muted">Description</h6>
+            <p>{{ task.description }}</p>
+            <hr>
+
+<div class="task-timer-container" data-task-id="{{ task.id }}" data-is-submitted="{{ task.is_submitted|yesno:'true,false' }}">
+  <div class="timerDisplay">00:00:00</div>
+  <button class="btn text-light px-5 startBtn" style="background-color: rgb(69, 108, 109);" >Start</button>
+  <button class="btn text-light px-5 pauseBtn d-none" style="background-color: rgb(30,58,138);" ><i class="bi bi-pause "></i></button>
+  <button class="btn text-light px-5 resumeBtn d-none" style="background-color: rgb(30,58,138);"><i class="bi bi-play "></i></button>
+  <button class="btn text-light px-5 submitBtn d-none" style="background-color: rgb(30,58,138);">Submit</button>
+</div>
+
+<div class="spinner-grow spinner-grow-sm text-light d-none" id="spinner-{{ task.id }}" role="status">
+  <span class="visually-hidden">Loading...</span>
+</div>
+<!-- Placeholder for Bootstrap alert -->
+<div id="submission-alert-box"></div>
+            </div>
+
+          <!-- Right side -->
+<div class="col-md-5 border-start mt-3 mt-md-0 ps-md-4">
+  <div class="mb-3">
+    <strong>Created At:</strong><br>
+    {{ task.created_at|localtime|date:"Y-m-d H:i" }}
+  </div>
+
+  <div class="mb-3">
+    <strong>Deadline:</strong><br>
+    {% if task.deadline %}
+      {{ task.deadline|localtime|date:"Y-m-d H:i" }}
+    {% else %}
+      <span class="text-muted">No Deadline</span>
+    {% endif %}
+  </div>
+
+  <!-- Pause & Resume counts side-by-side -->
+  <!-- <div class="d-flex justify-content-between mb-3">
+    <div>
+      <strong> Paused:</strong><br>
+      <span class="badge bg-warning text-dark">{{ task.timers.last.pause_count }}</span>
+    </div>
+    <div>
+      <strong>Resumed:</strong><br>
+      <span class="badge bg-info text-dark">{{ task.timers.last.resume_count }}</span>
+    </div>
+  </div> -->
+
+  <!-- Submitted At & Status -->
+  {% if task.is_submitted %}
+  <div class="mt-4">
+    <strong>📬 Submitted At:</strong><br>
+    {{ task.submitted_at|localtime|date:"Y-m-d H:i" }}
+    <div class="mt-2">
+      {% if task.deadline and task.submitted_at > task.deadline %}
+        <span class="badge bg-danger">❌ Submitted After Deadline</span>
+      {% else %}
+        <span class="badge bg-success">✅ Submitted On Time</span>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="mt-4 text-muted">
+    ⏳ Task not submitted yet.
+  </div>
+  {% endif %}
+</div>
+
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+          data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+<script>
+  document.querySelectorAll('.task-timer-container').forEach(container => {
+    const taskId = container.getAttribute('data-task-id');
+    const isSubmitted = container.getAttribute('data-is-submitted') === "true";
+
+    const timerDisplay = container.querySelector('.timerDisplay');
+    const startBtn = container.querySelector('.startBtn');
+    const pauseBtn = container.querySelector('.pauseBtn');
+    const resumeBtn = container.querySelector('.resumeBtn');
+    const submitBtn = container.querySelector('.submitBtn');
+    const STORAGE_KEY = `taskTimerData-${taskId}`;
+    const alertBox = document.getElementById("submission-alert-box");
+
+    let interval;
+
+    function formatTime(totalSeconds) {
+      const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      const secs = String(totalSeconds % 60).padStart(2, "0");
+      return `${hrs}:${mins}:${secs}`;
+    }
+
+    function startTimer(startTime, elapsedBefore = 0) {
+      clearInterval(interval);
+      interval = setInterval(() => {
+        const now = new Date().getTime();
+        const elapsed = Math.floor((now - startTime) / 1000) + elapsedBefore;
+        timerDisplay.textContent = formatTime(elapsed);
+      }, 1000);
+    }
+
+    function showButtons(...visibleBtns) {
+      [startBtn, pauseBtn, resumeBtn, submitBtn].forEach(btn => btn.classList.add("d-none"));
+      visibleBtns.forEach(btn => btn.classList.remove("d-none"));
+    }
+
+    // ✅ Handle submitted task: freeze + hide buttons
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (isSubmitted) {
+      if (stored) {
+        const data = JSON.parse(stored);
+        const trackedSeconds = data.status === "running"
+          ? Math.floor((new Date().getTime() - data.startTime) / 1000) + data.elapsed
+          : data.elapsed;
+        timerDisplay.textContent = formatTime(trackedSeconds);
+      }
+      showButtons();  // Hide all buttons
+      return;
+    }
+
+    // ✅ Load existing timer state
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.status === "running") {
+        startTimer(data.startTime, data.elapsed);
+        showButtons(pauseBtn, submitBtn);
+      } else if (data.status === "paused") {
+        timerDisplay.textContent = formatTime(data.elapsed);
+        showButtons(resumeBtn, submitBtn);
+      }
+    } else {
+      showButtons(startBtn);
+    }
+
+    // ✅ Start button
+    startBtn.onclick = () => {
+      const now = new Date().getTime();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        startTime: now,
+        elapsed: 0,
+        status: "running"
+      }));
+      startTimer(now, 0);
+      showButtons(pauseBtn, submitBtn);
+    };
+
+    // ✅ Pause button
+    pauseBtn.onclick = () => {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const now = new Date().getTime();
+      const elapsed = Math.floor((now - data.startTime) / 1000) + data.elapsed;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        elapsed: elapsed,
+        status: "paused"
+      }));
+      clearInterval(interval);
+      showButtons(resumeBtn, submitBtn);
+    };
+
+    // ✅ Resume button
+    resumeBtn.onclick = () => {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const now = new Date().getTime();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        startTime: now,
+        elapsed: data.elapsed,
+        status: "running"
+      }));
+      startTimer(now, data.elapsed);
+      showButtons(pauseBtn, submitBtn);
+    };
+
+    // ✅ Submit button
+    submitBtn.onclick = () => {
+      clearInterval(interval);
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const now = new Date().getTime();
+      const trackedSeconds = data.status === "running"
+        ? Math.floor((now - data.startTime) / 1000) + data.elapsed
+        : data.elapsed;
+
+      if (trackedSeconds <= 0) {
+        alertBox.innerHTML = `
+          <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+            ⏱️ Please start the timer before submitting the task.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+        return;
+      }
+
+      fetch(`/submit-task/${taskId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: JSON.stringify({ tracked_time: trackedSeconds })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success") {
+          alertBox.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+              ✅ ${data.message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+          // ✅ Show the final time (DO NOT reset to 00:00:00)
+          timerDisplay.textContent = formatTime(trackedSeconds);
+
+          // ✅ Clear storage and disable buttons
+          localStorage.removeItem(STORAGE_KEY);
+          showButtons();
+        } else {
+          alertBox.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+              ❌ Error: ${data.message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+        }
+      })
+      .catch(err => {
+        console.error("Submit failed:", err);
+        alertBox.innerHTML = `
+          <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            ❌ Something went wrong while submitting the task.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+      });
+    };
+  });
+
+  // ✅ CSRF Token Fetcher
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+<script>
+(function () {
+  const toggleBtnNavbar = document.getElementById('navbarToggle');
+  const closeBtnNavbar = document.getElementById('navbarCloseBtn');
+  const navbar = document.getElementById('navbarContent');
+
+  if (toggleBtnNavbar && closeBtnNavbar && navbar) {
+    toggleBtnNavbar.addEventListener('click', () => {
+      const bsCollapse = new bootstrap.Collapse(navbar, { toggle: true });
+      toggleBtnNavbar.classList.add('d-none');
+      closeBtnNavbar.classList.remove('d-none');
+    });
+
+    closeBtnNavbar.addEventListener('click', () => {
+      const bsCollapse = new bootstrap.Collapse(navbar, { toggle: true });
+      closeBtnNavbar.classList.add('d-none');
+      toggleBtnNavbar.classList.remove('d-none');
+    });
+  }
+})();
+</script>
+
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,39 @@
+<div class="container mt-5">
+  <h2 class="mb-4">All Submitted Tasks</h2>
+  <table class="table table-bordered table-hover">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th>
+        <th>Task Title</th>
+        <th>User</th>
+        <th>Assigned Hours</th>
+        <th>Worked Hours</th>
+        <th>Remaining</th>
+        <th>Submitted On</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in assignments %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ a.task.title }}</td>
+        <td>{{ a.user.username }}</td>
+        <td>{{ a.assigned_hours }}</td>
+        <td>{{ a.worked_hours }}</td>
+        <td>
+          {% if a.remaining_hours < 0 %}
+            <span class="text-danger">Exceeded by {{ a.remaining_hours|abs }} hrs</span>
+          {% elif a.remaining_hours == 0 %}
+            <span class="text-success">Completed</span>
+          {% else %}
+            <span class="text-warning">{{ a.remaining_hours }} hrs left</span>
+          {% endif %}
+        </td>
+        <td>{{ a.end_time|date:"Y-m-d h:i A" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-center">No submissions yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
