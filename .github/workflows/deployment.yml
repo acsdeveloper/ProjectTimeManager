@@ -1,0 +1,26 @@
+
+name: Manual Deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  checkout-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v5
+      - name: Execute remote SSH commands in the server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME || 'ubuntu' }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          script: |
+            cd /home/ubuntu/ProjectTimeManager && \
+            git pull && \
+            uv pip install -r TaskManager/requirements.txt && \
+            /home/ubuntu/ProjectTimeManager/.venv/bin/python3 manage.py migrate && \
+            /home/ubuntu/ProjectTimeManager/.venv/bin/python3 TaskManager/manage.py collectstatic
+            sudo systemctl restart tasktimer.service
