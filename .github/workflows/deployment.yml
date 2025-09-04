@@ -18,9 +18,24 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT || 22 }}
           script: |
-            cd /home/ubuntu/ProjectTimeManager && \
-            git pull && \
-            uv pip install -r TaskManager/requirements.txt && \
-            /home/ubuntu/ProjectTimeManager/.venv/bin/python3 manage.py migrate && \
-            /home/ubuntu/ProjectTimeManager/.venv/bin/python3 TaskManager/manage.py collectstatic
+            set -Eeuo pipefail
+            APP_DIR="/home/ubuntu/ProjectTimeManager"
+            cd "$APP_DIR"
+
+            echo "==> Pull latest code"
+            git pull --ff-only
+
+            echo "==> Install dependencies"
+            uv pip install --python "$APP_DIR/.venv/bin/python" -r TaskManager/requirements.txt
+
+            echo "==> Run migrations"
+            $APP_DIR/.venv/bin/python3 TaskManager/manage.py migrate --noinput
+
+            echo "==> Collect static files"
+            $APP_DIR/.venv/bin/python3 TaskManager/manage.py collectstatic --noinput
+
+            echo "==> Restart service"
             sudo systemctl restart tasktimer.service
+
+            echo "✅ Deployment completed"
+
